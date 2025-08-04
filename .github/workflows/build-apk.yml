@@ -1,3 +1,5 @@
+name: Build Android APK
+
 on:
   push:
     branches: [ main ]
@@ -6,20 +8,27 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      COREPACK_ENABLE_PREVIEWS: 1
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Setup Node.js 20
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
-          cache: 'yarn'
+          node-version: '20'
+          cache: false
 
-      - name: Enable Corepack
+      - name: Enable Corepack with force
         run: |
-          corepack enable
-          corepack prepare yarn@4.9.1 --activate
+          sudo npm install -g corepack
+          corepack enable --install-directory=~/bin
+          corepack prepare yarn@4.9.1 --activate --force
+          echo "~/bin" >> $GITHUB_PATH
+
+      - name: Verify Yarn version
+        run: yarn --version
 
       - name: Setup EAS
         uses: expo/expo-github-action@v8
@@ -28,12 +37,9 @@ jobs:
           token: ${{ secrets.EXPO_TOKEN }}
 
       - name: Install dependencies
-        run: yarn install --immutable
+        run: |
+          yarn set version 4.9.1
+          yarn install --immutable
 
       - name: Build APK
         run: npx eas-cli build --platform android --profile preview --non-interactive --no-wait
-
-      - name: Get build URL
-        run: |
-          echo "Build started! You can monitor the build at https://expo.dev/accounts/your-actual-expo-account/projects/cherry-studio-app/builds"
-          echo "Once complete, you can download the APK from the Expo dashboard"
