@@ -1,5 +1,3 @@
-name: Build Android APK
-
 on:
   push:
     branches: [ main ]
@@ -10,25 +8,27 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: '18'
           cache: 'yarn'
 
       - name: Enable Corepack
-        run: corepack enable
+        run: |
+          corepack enable
+          corepack prepare yarn@4.9.1 --activate
 
       - name: Setup EAS
         uses: expo/expo-github-action@v8
         with:
           eas-version: latest
-          token: ${{ github.token }}
+          token: ${{ secrets.EXPO_TOKEN }}
 
       - name: Install dependencies
-        run: yarn install
+        run: yarn install --immutable
 
       - name: Build APK
         run: npx eas-cli build --platform android --profile preview --non-interactive --no-wait
