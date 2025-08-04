@@ -1,5 +1,6 @@
 import { File } from 'expo-file-system/next'
 import { isEmpty } from 'lodash'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 
 import { isNotSupportTemperatureAndTopP } from '@/config/models'
 import { isFunctionCallingModel } from '@/config/models/functionCalling'
@@ -121,29 +122,32 @@ export abstract class BaseApiClient<
     return this.provider.apiHost
   }
 
-  public getApiKey() {
+  public async getApiKey() {
     const keys = this.provider.apiKey.split(',').map(key => key.trim())
-    // const keyName = `provider:${this.provider.id}:last_used_key`
+    const keyName = `provider:${this.provider.id}:last_used_key`
 
-    // if (keys.length === 1) {
-    //   return keys[0]
-    // }
+    if (keys.length === 1) {
+      return keys[0]
+    }
 
-    // const lastUsedKey = window.keyv.get(keyName)
+    try {
+      const lastUsedKey = await AsyncStorage.getItem(keyName)
 
-    // if (!lastUsedKey) {
-    //   window.keyv.set(keyName, keys[0])
-    //   return keys[0]
-    // }
+      if (!lastUsedKey) {
+        await AsyncStorage.setItem(keyName, keys[0])
+        return keys[0]
+      }
 
-    // const currentIndex = keys.indexOf(lastUsedKey)
-    // const nextIndex = (currentIndex + 1) % keys.length
-    // const nextKey = keys[nextIndex]
-    // window.keyv.set(keyName, nextKey)
+      const currentIndex = keys.indexOf(lastUsedKey)
+      const nextIndex = (currentIndex + 1) % keys.length
+      const nextKey = keys[nextIndex]
+      await AsyncStorage.setItem(keyName, nextKey)
 
-    // return nextKey
-
-    return keys[0] // to remove
+      return nextKey
+    } catch (error) {
+      // 如果存储操作失败，返回第一个key
+      return keys[0]
+    }
   }
 
   public defaultHeaders() {
