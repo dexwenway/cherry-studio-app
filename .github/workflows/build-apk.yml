@@ -1,0 +1,36 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'yarn'
+
+      - name: Setup EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ github.token }}
+
+      - name: Install dependencies
+        run: yarn install
+
+      - name: Build APK
+        run: npx eas-cli build --platform android --profile preview --non-interactive --no-wait
+
+      - name: Get build URL
+        run: |
+          echo "Build started! You can monitor the build at https://expo.dev/accounts/your-actual-expo-account/projects/cherry-studio-app/builds"
+          echo "Once complete, you can download the APK from the Expo dashboard"
